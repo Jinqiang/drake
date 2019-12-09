@@ -1,0 +1,8 @@
+lxml
+matplotlib
+pydot
+PyYAML
+pyzmq
+tornado
+u-msgpack-python
+virtualenv

@@ -1,0 +1,60 @@
+# -*- python -*-
+
+load("@drake//tools/install:install.bzl", "install")
+
+licenses(["notice"])  # MIT
+
+package(default_visibility = ["//visibility:public"])
+
+config_setting(
+    name = "linux",
+    values = {"cpu": "k8"},
+    visibility = ["//visibility:private"],
+)
+
+cc_library(
+    name = "scsdir",
+    srcs = glob([
+        "src/*.c",
+    ]) + [
+        "linsys/amatrix.h",
+        "linsys/common.c",
+        "linsys/common.h",
+        "linsys/direct/private.c",
+        "linsys/direct/private.h",
+    ],
+    hdrs = glob([
+        "include/*.h",
+    ]),
+    defines = [
+        "USE_LAPACK=1",
+        # Keep the default primitive size of `double` and `int`.  Don't define
+        # 'SFLOAT' nor 'DLONG' unless @qdldl and @osqp are also changed to use
+        # those primitive sizes.
+    ],
+    includes = [
+        "include",
+        "linsys",
+    ],
+    copts = [
+        "-fvisibility=hidden",
+        "-w",
+        "-Werror=incompatible-pointer-types",
+    ],
+    linkstatic = 1,
+    linkopts = select({
+        ":linux": ["-lrt"],
+        "@//conditions:default": [],
+    }),
+    deps = [
+        "@blas",
+        "@lapack",
+        "@qdldl",
+        "@suitesparse//:amd",
+    ],
+)
+
+install(
+    name = "install",
+    docs = ["LICENSE.txt"],
+)

@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
-<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="http://drake.mit.edu"
-    xmlns="http://drake.mit.edu" elementFormDefault="qualified">
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" targetNamespace="https://drake.mit.edu"
+    xmlns="https://drake.mit.edu" elementFormDefault="qualified">
 
     <xs:annotation>
         <xs:documentation>XML Schema for DrakeURDF v1.0
@@ -39,6 +39,9 @@ or
     <xs:complexType name="loop_joint">
         <xs:annotation>
             <xs:documentation>You can add a loop joint if you have a kinematic loop (e.g. four-bar linkage, or even something more complicated) in your robot.  To use this interface, you must first describe every link in your robot as part of a kinematic tree (no loops). You should be able to take a path through the linkages that touches everything without any loops. Then add the remaining loops by referencing existing links from the tree.
+
+The loop joint is a one-degree of freedom joint oriented along the specified axis of the body frame in each link.  Use the rpy fields of the link references to rotate that axis in the coordinate frame of the links.
+
 
 There are a few limitations with the current implementation.  We do not currently support joint limits nor actuators at the new joint created by the loop_joint tag.  For all of the systems we have modeled so far, there has always been at least one of these "simple" joints in each kinematic loop; and we are simply careful to write down the initial kinematic tree so that it includes all of the more complex joints, leaving the simple joint as the loop joint.
 </xs:documentation>
@@ -105,7 +108,7 @@ from an input to the system, with different scalings for each.</xs:documentation
                 <xs:annotation>
                     <xs:documentation> Places added-mass coefficients on a point on the parent body. Added-mass forces act like a 'drag' that is proportional to the acceleration of the body, rather than the velocity. Important when the body is comparable in mass to the surrounding fluid, or if rapid motions are needed.
 
-These forces are represented by a 6x6 matrix 'Ma' similar to a mass matrix, where the force is F=-Ma*a (+coriolis terms). Each matrix element is refered as 'mij', where 'i' and 'j' are the rows and columns of the matrix. As is standard in the oceanographic literature, rows 123 are the linear accelerations, and 456 are the angular accelerations [note this is opposite of Featherstone's notation] </xs:documentation>
+These forces are represented by a 6x6 matrix 'Ma' similar to a mass matrix, where the force is F=-Ma*a (+coriolis terms). Each matrix element is referred as 'mij', where 'i' and 'j' are the rows and columns of the matrix. As is standard in the oceanographic literature, rows 123 are the linear accelerations, and 456 are the angular accelerations [note this is opposite of Featherstone's notation] </xs:documentation>
                 </xs:annotation>
             </xs:element>
             <xs:element name="buoyancy" type="buoyancy">
@@ -376,6 +379,12 @@ Reynolds number around which we design the aerodynamic coefficients.</xs:documen
 
     <xs:complexType name="propellor">
         <xs:all>
+            <xs:element name="parent" type="link_reference">
+                <xs:annotation>
+                    <xs:documentation>String naming the link on which
+                        this propellor is attached.</xs:documentation>
+                </xs:annotation>
+            </xs:element>
             <xs:element name="axis" type="axis" minOccurs="0" maxOccurs="1">
                 <xs:annotation>
                     <xs:documentation>Axis the thrust element acts on.  For example a propellor facing forward would point in the X-axis and you'd use: xyz="1 0 0". </xs:documentation>
@@ -580,6 +589,7 @@ e.g. terminator - pulley - pulley - crossover - pulley - terminator
             <xs:enumeration value="fixed"/>
             <xs:enumeration value="floating"/>
             <xs:enumeration value="planar"/>
+            <xs:enumeration value="ball"/>
         </xs:restriction>
     </xs:simpleType>
 
@@ -861,7 +871,8 @@ f_friction = min(1,max(-1,qd./m.coulomb_window')).*m.coulomb_friction' + m.dampi
     prismatic - a sliding joint that slides along the axis, and has a limited range specified by the upper and lower limits.
     fixed - This is not really a joint because it cannot move. All degrees of freedom are locked. This type of joint does not require the axis, calibration, dynamics, limits or safety_controller.
     floating - This joint allows motion for all 6 degrees of freedom.
-    planar - This joint allows motion in a plane perpendicular to the axis. </xs:documentation>
+    planar - This joint allows motion in a plane perpendicular to the axis.
+    ball - This joint allows free rotation in all directions with no upper or lower limits. </xs:documentation>
             </xs:annotation>
         </xs:attribute>
         <xs:attribute default="1" name="has_position_sensor" type="xs:boolean" use="optional"/>
@@ -948,7 +959,7 @@ f_friction = min(1,max(-1,qd./m.coulomb_window')).*m.coulomb_friction' + m.dampi
                 <xs:element maxOccurs="unbounded" minOccurs="0" name="loop_joint" type="loop_joint">
                     <xs:annotation>
                         <xs:documentation>Adds support for simple closed-loop kinematic chains. For an example, see
-examples/SimpleFourBar/FourBar.urdf
+examples/simple_four_bar/FourBar.urdf
 
 Note: We do not support dynamics or torque at the loop_joint
 yet. (see bug 921)</xs:documentation>

@@ -1,0 +1,18 @@
+#!/bin/bash
+
+# This shell script and the accompanying Dockerfile are used by the project
+# maintainers to create the precompiled doxygen binaries that are downloaded
+# during the build. They are neither called during the build nor expected to be
+# called by most developers or users of the project.
+
+set -euxo pipefail
+
+rm -f doxygen-*-bionic-x86_64.tar.gz
+
+docker build --tag doxygen-bionic "${BASH_SOURCE%/*}"
+trap 'docker rmi doxygen-bionic' EXIT
+docker run --detach --name doxygen-bionic-build --tty doxygen-bionic
+trap 'docker stop doxygen-bionic-build && docker rm doxygen-bionic-build && docker rmi doxygen-bionic' EXIT
+docker cp doxygen-bionic-build:$(docker exec doxygen-bionic-build find /opt/doxygen/bin/ -maxdepth 1 -name 'doxygen-*-bionic-x86_64.tar.gz') .
+
+shasum --algorithm 256 doxygen-*-bionic-x86_64.tar.gz | tee doxygen-bionic-x86_64.tar.gz.sha256
